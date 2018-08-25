@@ -6,7 +6,7 @@ var app = http.createServer(function(request,response){
     var _url = request.url; // _url=query string. ex) /?id=HTML
     var queryData = url.parse(_url, true).query; // queayData = { id: 'HTML', string: 'CSS' }
     var title = queryData.id;
-    console.log(queryData.id);// queryData.name = /?name=HTML , queryData.id = /?id=HTML
+    console.log(queryData.id);// queryData.name = HTML (/?name=HTML) , queryData.id = HTML (/?id=HTML)
     if(_url == '/'){
       title = 'Welcome';
     }
