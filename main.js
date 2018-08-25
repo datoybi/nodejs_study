@@ -86,11 +86,11 @@ var app = http.createServer(function(request,response){
         var post = qs.parse(body);
         var title = post.title;
         var description = post.description;
-        console.log(post, title);
+        fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+          response.writeHead(302, {Location: `/?id=${title}`});  // 302 : 페이지를 REDIRECT
+          response.end();
+        });
       });
-
-      response.writeHead(200);  // 200 성공적으로 파일 열림
-      response.end('success');
     } else {
       response.writeHead(404);  // 에러
       response.end('Not found');
