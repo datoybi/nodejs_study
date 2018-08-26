@@ -3,6 +3,8 @@ var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
 var template = require('./lib/template.js');
+var path = require('path');
+var sanitizeHtml = require('sanitize-html');
 
 var app = http.createServer(function(request,response){
     var _url = request.url; // _url=query string. ex) /?id=HTML
@@ -21,13 +23,18 @@ var app = http.createServer(function(request,response){
         });
       } else {
         fs.readdir('./data', function(error, fileList) {
-        fs.readFile(`data/${queryData.id}`, 'utf8', function(err, description){ //template literal 주의
+          var filteredId = path.parse(queryData.id).base;
+        fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){ //template literal 주의
           var title = queryData.id;
+          var sanitizedTile = sanitizeHtml(title);
+          var sanitizedDescription = sanitizeHtml(description, {
+            allowedTags:['h1']
+          });
           var list = template.list(fileList);
-          var html =  template.HTML(title, list, `<h2>${title}</h2>${description}`,
-            `<a href="/create">create</a> <a href="/update?id=${title}">update</a>
+          var html =  template.HTML(sanitizedTile, list, `<h2>${sanitizedTile}</h2>${sanitizedDescription}`,
+            `<a href="/create">create</a> <a href="/update?id=${sanitizedTile}">update</a>
             <form action="delete_process" method="post" onsubmit="">
-              <input type="hidden" name="id" value="${title}">
+              <input type="hidden" name="id" value="${sanitizedTile}">
               <input type="submit" value="delete" style="">
             </form>`,);
           response.writeHead(200);  // 200 성공적으로 파일 열림
@@ -69,7 +76,8 @@ var app = http.createServer(function(request,response){
       });
     } else if(pathname === '/update') {
       fs.readdir('./data', function(error, fileList) {
-      fs.readFile(`data/${queryData.id}`, 'utf8', function(err, description){ //template literal 주의
+      var filteredId = path.parse(queryData.id).base;
+      fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){ //template literal 주의
         var title = queryData.id;
         var list = template.list(fileList);
         var html =  template.HTML(title, list,
@@ -97,9 +105,10 @@ var app = http.createServer(function(request,response){
     request.on('end', function(){
       var post = qs.parse(body);
       var id = post.id;
+      var filteredId = path.parse(id).base;
       var title = post.title;
       var description = post.description;
-      fs.rename(`data/${id}`, `data/${title}`, function(error) {
+      fs.rename(`data/${filteredId}`, `data/${title}`, function(error) {
         fs.writeFile(`data/${title}`, description, 'utf8', function(err){
           response.writeHead(302, {Location: `/?id=${title}`});  // 302 : 페이지를 REDIRECT
           response.end();
